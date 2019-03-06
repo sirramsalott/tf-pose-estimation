@@ -25,7 +25,6 @@ PARTS = [
     "LShoulder",
     "LElbow",
     "LWrist",
-    "MidHip",
     "RHip",
     "RKnee",
     "RAnkle",
@@ -37,10 +36,13 @@ PARTS = [
 def humans_to_msg(humans):
     parts = humans[0].body_parts
     def pt(idx):
-        part = parts[idx]
-        return Point2D(part.x * 640 + 0.5, part.y * 480 + 0.5, part.score)
+        if idx in parts:
+            part = parts[idx]
+            return Point2D(part.x * 640 + 0.5, part.y * 480 + 0.5, part.score)
+        else:
+            return Point2D(0, 0, 0)
 
-    return {j: pt(i) for i, j in enumerate(PARTS, 1) if i in parts}
+    return {j: pt(i) for i, j in enumerate(PARTS[1:], 1)}
 
 
 def callback_image(data):

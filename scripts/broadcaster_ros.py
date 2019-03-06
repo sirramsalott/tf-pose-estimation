@@ -11,29 +11,36 @@ from cv_bridge import CvBridge, CvBridgeError
 from std_msgs.msg import String
 from sensor_msgs.msg import Image
 from tfpose_ros.msg import Persons, Person, BodyPartElm
+from fyp.msg import Point2D
 
 from tf_pose.estimator import TfPoseEstimator
 from tf_pose.networks import model_wh, get_graph_path
 
+PARTS = [
+    "Nose",
+    "Neck",
+    "RShoulder",
+    "RElbow",
+    "RWrist",
+    "LShoulder",
+    "LElbow",
+    "LWrist",
+    "MidHip",
+    "RHip",
+    "RKnee",
+    "RAnkle",
+    "LHip",
+    "LKnee",
+    "LAnkle"
+]
 
 def humans_to_msg(humans):
-    persons = Persons()
+    parts = humans[0].body_parts
+    def pt(idx):
+        part = parts[idx]
+        return Point2D(part.x * 640 + 0.5, part.y * 480 + 0.5, part.score)
 
-    for human in humans:
-        person = Person()
-
-        for k in human.body_parts:
-            body_part = human.body_parts[k]
-
-            body_part_msg = BodyPartElm()
-            body_part_msg.part_id = body_part.part_idx
-            body_part_msg.x = body_part.x
-            body_part_msg.y = body_part.y
-            body_part_msg.confidence = body_part.score
-            person.body_part.append(body_part_msg)
-        persons.persons.append(person)
-
-    return persons
+    return {j: pt(i) for i, j in enumerate(PARTS, 1) if i in parts}
 
 
 def callback_image(data):
@@ -53,12 +60,9 @@ def callback_image(data):
     finally:
         tf_lock.release()
 
-    msg = humans_to_msg(humans)
-    msg.image_w = data.width
-    msg.image_h = data.height
-    msg.header = data.header
-
-    pub_pose.publish(msg)
+    msgs = humans_to_msg(humans)
+    for j in msgs:
+        pubs[j].publish(msgs[j])
 
 
 if __name__ == '__main__':
@@ -91,7 +95,9 @@ if __name__ == '__main__':
     cv_bridge = CvBridge()
 
     rospy.Subscriber(image_topic, Image, callback_image, queue_size=1, buff_size=2**24)
-    pub_pose = rospy.Publisher('~pose', Persons, queue_size=1)
+    pubs = {j: rospy.Publisher("/fyp/pose/{}".format(j),
+                               Point2D, queue_size=1)
+            for j in PARTS}
 
     rospy.loginfo('start+')
     rospy.spin()

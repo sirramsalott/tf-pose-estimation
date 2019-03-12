@@ -34,16 +34,18 @@ PARTS = [
 ]
 
 def humans_to_msg(humans):
-    parts = humans[0].body_parts
-    def pt(idx):
-        if idx in parts:
-            part = parts[idx]
-            return Point2D(part.x * 640 + 0.5, part.y * 480 + 0.5, part.score)
-        else:
-            return Point2D(0, 0, 0)
+    if humans:
+        parts = humans[0].body_parts
+        def pt(idx):
+            if idx in parts:
+                part = parts[idx]
+                return Point2D(part.x * 640 + 0.5, part.y * 480 + 0.5, part.score)
+            else:
+                return Point2D(0, 0, 0)
 
-    return {j: pt(i) for i, j in enumerate(PARTS[1:], 1)}
+        return {j: pt(i) for i, j in enumerate(PARTS[1:], 1)}
 
+    return {}
 
 def callback_image(data):
     # et = time.time()

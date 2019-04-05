@@ -3,7 +3,9 @@ import logging
 import os
 import cv2
 import base64
+import sys
 
+sys.path.append("/home/joeramsay/tf-openpose")
 from tf_pose import common
 from tf_pose.estimator import TfPoseEstimator
 from tf_pose.networks import get_graph_path, model_wh
